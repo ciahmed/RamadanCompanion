@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ramadan Companion 2026</title>
+<link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Amiri&family=Noto+Serif+Bengali:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .arabic { font-family: 'Amiri', serif; font-size: 1.8rem; line-height: 2.8rem; direction: rtl; }
+        .bangla { font-family: 'Noto Serif Bengali', serif; }
+        .active-day-row { background: rgba(16, 185, 129, 0.15) !important; border-left: 4px solid #10b981 !important; }
+        .qadr-row { background: rgba(251, 191, 36, 0.08) !important; border-left: 4px solid #fbbf24 !important; }
+        .qadr-badge { background: #fbbf24; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 8px; font-weight: 900; text-transform: uppercase; margin-left: 8px; vertical-align: middle; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        select option { background: #0f172a; color: white; }
+        .moon-icon { font-size: 1.5rem; transition: all 0.5s ease; }
+        .ashra-mercy { color: #10b981; filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.6)); }
+        .ashra-forgiveness { color: #38bdf8; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6)); }
+        .ashra-salvation { color: #fbbf24; filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6)); }
+        #progress-fill { transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        @media print {
+            body { background: white; color: black; display: block; height: auto; }
+            .glass { border: 1px solid #ddd; background: none; color: black; margin-bottom: 20px; break-inside: avoid; }
+            button, select, #location-selector, .no-print { display: none !important; }
+            #calendar-scroll-container { max-height: none !important; overflow: visible !important; height: auto !important; }
+            main.grid { display: block !important; }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="app-container" class="max-w-7xl mx-auto">
+        <div class="mb-8 no-print">
+            <div class="flex justify-between items-end mb-2">
+                <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Ramadan Progress</span>
+                <span id="progress-text" class="text-xs font-mono font-bold text-white">0%</span>
+            </div>
+            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-white/5">
+                <div id="progress-fill" class="h-full bg-gradient-to-r from-emerald-600 to-teal-400" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <header class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-10 gap-6 relative">
+            <div class="flex flex-col md:flex-row md:items-center gap-6">
+                <div>
+                    <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-200">Ramadan Companion</h1>
+                    <p class="text-slate-400 mt-1">Your spiritual journey, organized.</p>
+                </div>
+                <div class="flex items-center gap-4 no-print">
+                    <div class="glass px-4 py-3 rounded-2xl flex items-center gap-3 border-emerald-500/30">
+                        <i class="fas fa-map-marker-alt text-emerald-400"></i>
+                        <select id="location-selector" onchange="updateLocationData()" class="bg-transparent border-none outline-none text-sm font-bold cursor-pointer text-emerald-100">
+                            <option value="33.92,-116.97,America/Los_Angeles,Beaumont (92223)">Beaumont, CA (92223)</option>
+                            <option value="35.44,-80.84,America/New_York,Huntersville (28078)">Huntersville, NC (28078)</option>
+                            <option value="28.81,-81.27,America/New_York,Sanford (32773)">Sanford, FL (32773)</option>
+                            <option value="34.05,-117.26,America/Los_Angeles,Loma Linda (92354)">Loma Linda, CA (92354)</option>
+                            <option value="23.81,90.41,Asia/Dhaka,Dhaka">Dhaka, BD</option>
+                        </select>
+                    </div>
+                    <div class="glass p-3 rounded-2xl flex items-center justify-center min-w-[50px]">
+                        <i id="moon-phase-icon" class="fas fa-moon moon-icon ashra-mercy"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 w-full xl:w-auto">
+                <div class="glass p-3 rounded-2xl"><span class="text-[9px] uppercase text-slate-400 block">City Time</span><span id="local-time-display" class="font-mono font-bold text-white text-sm">--:--</span></div>
+                <div class="glass p-3 rounded-2xl border-l-2 border-sky-500"><span class="text-[9px] uppercase text-sky-400 block">Weather</span><span id="weather-display" class="font-mono font-bold text-white text-sm">--°F</span></div>
+                <div class="glass p-3 rounded-2xl border-l-2 border-emerald-500"><span class="text-[9px] uppercase text-emerald-400 block">To Iftar</span><span id="timer-display" class="font-mono font-bold text-white text-sm">--:--</span></div>
+                <div class="glass p-3 rounded-2xl"><span class="text-[9px] uppercase text-orange-400 block">Sunrise</span><span id="sunrise-display" class="font-mono font-bold text-white text-sm">--:--</span></div>
+                <div class="glass p-3 rounded-2xl"><span class="text-[9px] uppercase text-indigo-400 block">Sunset</span><span id="sunset-display" class="font-mono font-bold text-white text-sm">--:--</span></div>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <div id="wisdom-card" class="glass rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
+                    <div class="bg-white/5 p-6 border-b border-white/10 flex justify-between items-center">
+                        <h2 class="text-xl font-bold flex items-center gap-3"><i class="fas fa-quran text-emerald-400"></i> Daily Guidance</h2>
+                        <span id="active-day-title" class="bg-emerald-500 text-slate-900 px-4 py-1 rounded-full text-xs font-black tracking-widest uppercase">DAY 1</span>
+                    </div>
+                    <div class="p-8 space-y-10">
+                        <section id="ashra-dua-box" class="p-4 rounded-2xl border border-white/5 bg-white/5 mb-6">
+                            <span id="ashra-label" class="text-[9px] font-black uppercase tracking-[0.2em] block mb-2 opacity-60">Ashra Dua</span>
+                            <p id="ashra-dua-ar" class="arabic text-white text-right mb-2 text-xl"></p>
+                            <p id="ashra-dua-en" class="text-xs text-slate-400 italic"></p>
+                        </section>
+                        <section>
+                            <p id="ayat-arabic" class="arabic text-white text-right mb-4"></p>
+                            <div class="grid gap-3 border-l-2 border-emerald-500/20 pl-6">
+                                <p id="ayat-eng" class="text-slate-300 italic text-sm"></p>
+                                <p id="ayat-bangla" class="bangla text-slate-400 text-sm"></p>
+                                <span id="ayat-ref" class="text-[10px] text-emerald-500/60 font-bold uppercase tracking-widest mt-1"></span>
+                            </div>
+                        </section>
+                        <section>
+                            <p id="hadith-arabic" class="arabic text-white text-right mb-4"></p>
+                            <div class="grid gap-3 border-l-2 border-blue-500/20 pl-6">
+                                <p id="hadith-eng" class="text-slate-300 italic text-sm"></p>
+                                <p id="hadith-bangla" class="bangla text-slate-400 text-sm"></p>
+                                <span id="hadith-ref" class="text-[10px] text-blue-500/60 font-bold uppercase tracking-widest mt-1"></span>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="glass rounded-3xl overflow-hidden border border-white/5 shadow-xl">
+                    <div class="p-6 bg-white/5 font-bold text-slate-300 flex justify-between items-center">
+                        <span>Ramadan Calendar 2026</span>
+                        <button onclick="window.print()" class="text-[10px] bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg transition no-print">
+                            <i class="fas fa-download mr-1"></i> Download PDF
+                        </button>
+                    </div>
+                    <div id="calendar-scroll-container" class="max-h-[665px] overflow-y-auto custom-scrollbar">
+                        <table class="w-full text-left">
+                            <thead class="text-[10px] uppercase text-slate-500 bg-slate-900/90 sticky top-0">
+                                <tr><th class="p-4">Day</th><th class="p-4">Date</th><th class="p-4">Suhur</th><th class="p-4">Iftar</th></tr>
+                            </thead>
+                            <tbody id="calendar-body" class="text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-8">
+                <div class="glass rounded-3xl p-6 border border-emerald-500/20">
+                    <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-4">Deed of the Day</h3>
+                    <div id="deed-list" class="space-y-3 mb-6"></div>
+                    <button onclick="saveProgress()" class="w-full bg-emerald-500 text-slate-900 py-3 rounded-xl font-black transition text-xs uppercase tracking-widest">
+                        <i class="fas fa-save mr-2"></i> Save
+                    </button>
+                    <p id="save-msg" class="text-[10px] text-emerald-400 text-center mt-2 opacity-0 transition">Progress Saved!</p>
+                </div>
+
+                <div class="glass rounded-3xl p-6 text-center border border-white/5">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Tasbeeh</h3>
+                    <div class="text-5xl font-mono font-bold mb-6 text-white" id="tasbih-count">0</div>
+                    <button onclick="updateTasbeeh(1)" class="w-full bg-white/5 hover:bg-white/10 text-white py-4 rounded-2xl font-black mb-2 transition uppercase tracking-widest">Count</button>
+                    <button onclick="resetTasbeeh()" class="text-[10px] text-slate-500 hover:text-red-400 underline transition no-print">Reset</button>
+                </div>
+
+                <div class="glass rounded-3xl p-6 border-b-4 border-emerald-500">
+                    <h2 class="text-sm font-bold mb-4 uppercase tracking-widest text-slate-400">Salah Tracker</h2>
+                    <div id="prayer-list" class="space-y-3"></div>
+                </div>
+
+                <div class="glass rounded-3xl p-6 border border-white/5">
+                    <h3 class="text-xs font-bold mb-4 text-emerald-400 uppercase tracking-widest">Zakat Calc (2.5%)</h3>
+                    <div class="space-y-4">
+                        <div class="relative no-print"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span><input type="number" id="z-val" oninput="calcZ()" placeholder="Total Savings" class="w-full bg-white/5 border border-white/10 p-4 pl-8 rounded-xl text-sm text-white"></div>
+                        <div class="p-4 bg-emerald-500/10 rounded-xl text-center"><span id="z-res" class="text-2xl font-mono font-bold text-white">$0.00</span></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let ramadanDays = [], tCount = 0, currentTz = 'America/Los_Angeles', activeDay = 1;
+
+        const surahMap = ["Al-Fatihah", "Al-Baqarah", "Al-Imran", "An-Nisa", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra", "Al-Kahf", "Maryam", "Ta-Ha", "Al-Anbiya", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Ash-Shu'ara", "An-Naml", "Al-Qasas", "Al-Ankabut", "Ar-Rum"];
+
+        const uniqueGuidance = [
+            { ar: "يَا أَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامُ", en: "O you who believe, fasting is prescribed for you.", bn: "হে মুমিনগণ, তোমাদের ওপর রোজা ফরজ করা হয়েছে।", ref: "2:183", hAr: "بُنِيَ الإِسْلاَمُ عَلَى خَمْسٍ", hEn: "Islam is built on five pillars.", hBn: "ইসলাম ৫টি স্তম্ভের ওপর প্রতিষ্ঠিত।", hRef: "Bukhari" },
+            { ar: "فَاذْكُرُونِي أَذْكُرْكُمْ", en: "So remember Me; I will remember you.", bn: "সুতরাং তোমরা আমাকে স্মরণ কর, আমিও তোমাদের স্মরণ করব।", ref: "2:152", hAr: "تَسَحَّرُوا فَإِنَّ فِي السَّحُورِ بَرَكَةً", hEn: "Take Suhur, for in it is blessing.", hBn: "সেহরি খাও, এতে বরকত আছে।", hRef: "Muslim" },
+            { ar: "شَهْرُ رَمَضَانَ الَّذِي أُنزِلَ فِيهِ الْقُرْآنُ", en: "The month of Ramadan in which was revealed the Quran.", bn: "রমজান মাস, যাতে কুরআন নাযিল করা হয়েছে।", ref: "2:185", hAr: "الصِّيَامُ جُنَّةٌ", hEn: "Fasting is a shield.", hBn: "রোজা হলো ঢাল স্বরূপ।", hRef: "Bukhari" },
+            { ar: "وَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ", en: "And when My servants ask you concerning Me - indeed I am near.", bn: "আর আমার বান্দারা যখন আমার সম্পর্কে আপনাকে জিজ্ঞেস করে, আমি তো কাছেই।", ref: "2:186", hAr: "لِلصَّائِمِ فَرْحَتَانِ", hEn: "The fasting person has two joys.", hBn: "রোজাদারের জন্য দুটি আনন্দ রয়েছে।", hRef: "Muslim" },
+            { ar: "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ", en: "Seek help through patience and prayer.", bn: "তোমরা ধৈর্য ও নামাজের মাধ্যমে সাহায্য প্রার্থনা কর।", ref: "2:153", hAr: "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ", hEn: "Deeds are judged by intentions.", hBn: "নিয়তের ওপর কাজের ফলাফল নির্ভরশীল।", hRef: "Bukhari" },
+            { ar: "وَسَارِعُوا إِلَىٰ مَغْفِرَةٍ مِّن رَّبِّكُمْ", en: "Hasten to forgiveness from your Lord.", bn: "তোমরা তোমাদের রবের ক্ষমার দিকে দ্রুত ধাবিত হও।", ref: "3:133", hAr: "مَنْ قَامَ رَمَضَانَ إِيمَانًا وَاحْتِسَابًا", hEn: "Whoever prays during nights in Ramadan with faith...", hBn: "যে ব্যক্তি ঈমানের সাথে রমজানের রাতে ইবাদত করে...", hRef: "Bukhari" },
+            { ar: "الَّذِينَ يُنفِقُونَ فِي السَّرَّاءِ وَالضَّرَّاءِ", en: "Who spend [in the cause of Allah] during ease and hardship.", bn: "যারা সচ্ছল ও অসচ্ছল অবস্থায় দান করে।", ref: "3:134", hAr: "الدُّعَاءُ هُوَ الْعِبَادَةُ", hEn: "Dua (supplication) is worship.", hBn: "দোয়াই হলো ইবাদত।", hRef: "Tirmidhi" },
+            { ar: "إِنَّ اللَّهَ يُحِبُّ الْمُحْسِنِينَ", en: "Indeed, Allah loves the doers of good.", bn: "নিশ্চয়ই আল্লাহ সৎকর্মশীলদের ভালোবাসেন।", ref: "3:134", hAr: "كَلِمَتَانِ خَفِيفَتَانِ عَلَى اللِّسَانِ", hEn: "Two words are light on the tongue but heavy on the scales...", hBn: "দুটি বাক্য যা উচ্চারণে সহজ কিন্তু ওজনে ভারী...", hRef: "Bukhari" },
+            { ar: "وَاعْبُدُوا اللَّهَ وَلَا تُشْرِكُوا بِهِ شَيْئًا", en: "Worship Allah and associate nothing with Him.", bn: "তোমরা আল্লাহর ইবাদত কর এবং তাঁর সাথে কাউকে শরিক করো না।", ref: "4:36", hAr: "الدِّينُ النَّصِيحَةُ", hEn: "Religion is sincere advice.", hBn: "দ্বীন হলো কল্যাণকামিতা।", hRef: "Muslim" },
+            { ar: "إِنَّمَا الْمُؤْمِنُونَ الَّذِينَ إِذَا ذُكِرَ اللَّهُ وَجِلَتْ قُلُوبُهُمْ", en: "The believers are those whose hearts tremble when Allah is mentioned.", bn: "মুমিন তো তারাই, আল্লাহর কথা স্মরণ হলে যাদের অন্তর কেঁপে ওঠে।", ref: "8:2", hAr: "إِذَا دَخَلَ رَمَضَانُ فُتِّحَتْ أَبْوَابُ الْجَنَّةِ", hEn: "When Ramadan begins, the gates of Paradise are opened.", hBn: "রমজান শুরু হলে জান্নাতের দরজা খুলে দেওয়া হয়।", hRef: "Bukhari" },
+            { ar: "يَا أَيُّهَا النَّاسُ قَدْ جَاءَتْكُم مَّوْعِظَةٌ مِّن رَّبِّكُمْ", en: "O mankind, there has come to you instruction from your Lord.", bn: "হে মানবজাতি, তোমাদের কাছে রবের পক্ষ থেকে উপদেশ এসেছে।", ref: "10:57", hAr: "السِّوَاكُ مَطْهَرَةٌ لِلْفَمِ", hEn: "The miswak cleanses the mouth.", hBn: "মিসওয়াক মুখকে পবিত্র করে।", hRef: "Nasai" },
+            { ar: "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنِّ الْقُلُوبُ", en: "Unquestionably, by the remembrance of Allah hearts are assured.", bn: "জেনে রেখো, আল্লাহর স্মরণেই অন্তর প্রশান্তি লাভ করে।", ref: "13:28", hAr: "مَنْ يُرِدِ اللَّهُ بِهِ خَيْرًا يُفَقِّهْهُ فِي الدِّينِ", hEn: "If Allah wants to do good to a person, He makes him comprehend the religion.", hBn: "আল্লাহ যার কল্যাণ চান তাকে দ্বীনের জ্ঞান দেন।", hRef: "Bukhari" },
+            { ar: "لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ", en: "If you are grateful, I will surely increase you.", bn: "যদি তোমরা কৃতজ্ঞতা স্বীকার কর, তবে আমি অবশ্যই তোমাদের বাড়িয়ে দেব।", ref: "14:7", hAr: "لَا يَشْكُرُ اللَّهَ مَنْ لَا يَشْكُرُ النَّاسَ", hEn: "He who does not thank people does not thank Allah.", hBn: "যে মানুষের কৃতজ্ঞতা করে না, সে আল্লাহর কৃতজ্ঞতা করে না।", hRef: "Abu Dawud" },
+            { ar: "وَقَضَىٰ رَبُّكَ أَلَّا تَعْبُدُوا إِلَّا إِيَّاهُ وَبِالْوَالِدَيْنِ إِحْسَانًا", en: "And your Lord has decreed that you not worship except Him, and to parents, good treatment.", bn: "তোমার রব আদেশ দিয়েছেন যে, তাঁকে ছাড়া অন্য কারো ইবাদত করো না এবং পিতা-মাতার সাথে সদ্ব্যবহার কর।", ref: "17:23", hAr: "رِضَا الرَّبِّ فِي رِضَا الْوَالِدِ", hEn: "The Lord's pleasure is in the parent's pleasure.", hBn: "পিতা-মাতার সন্তুষ্টিতেই আল্লাহর সন্তুষ্টি।", hRef: "Tirmidhi" },
+            { ar: "رَبِّ زِدْنِي عِلْمًا", en: "My Lord, increase me in knowledge.", bn: "হে আমার পালনকর্তা, আমার জ্ঞান বৃদ্ধি করুন।", ref: "20:114", hAr: "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ", hEn: "The best of you are those who learn Quran and teach it.", hBn: "তোমাদের মধ্যে সর্বোত্তম সে, যে কুরআন শিখে এবং শেখায়।", hRef: "Bukhari" },
+            { ar: "اللَّهُ نُورُ السَّمَاوَاتِ وَالْأَرْضِ", en: "Allah is the Light of the heavens and the earth.", bn: "আল্লাহ আসমান ও জমিনের আলো।", ref: "24:35", hAr: "اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ", hEn: "Fear Allah wherever you are.", hBn: "তুমি যেখানেই থাকো আল্লাহকে ভয় কর।", hRef: "Tirmidhi" },
+            { ar: "وَعِبَادُ الرَّحْمَٰنِ الَّذِينَ يَمْشُونَ عَلَى الْأَرْضِ هَوْنًا", en: "The servants of the Most Merciful are those who walk upon the earth easily.", bn: "রহমানের বান্দা তারাই যারা পৃথিবীতে নম্রভাবে চলাফেরা করে।", ref: "25:63", hAr: "الْحَيَاءُ شُعْبَةٌ مِنَ الإِيمَانِ", hEn: "Modesty is a branch of faith.", hBn: "লজ্জা ঈমানের একটি অঙ্গ।", hRef: "Muslim" },
+            { ar: "وَابْتَغِ فِيمَا آتَاكَ اللَّهُ الدَّارَ الْآخِرَةَ", en: "But seek, through that which Allah has given you, the home of the Hereafter.", bn: "আল্লাহ তোমাকে যা দিয়েছেন তা দিয়ে আখিরাতের আবাস অনুসন্ধান কর।", ref: "28:77", hAr: "مَنْ حَسُنَ إِسْلاَمُ الْمَرْءِ تَرْكُهُ مَا لاَ يَعْنِيهِ", hEn: "Part of the perfection of a person's Islam is his leaving that which is of no concern to him.", hBn: "অপ্রয়োজনীয় বিষয় ত্যাগ করাই ব্যক্তির উত্তম ইসলামের লক্ষণ।", hRef: "Tirmidhi" },
+            { ar: "إِنَّ الصَّلَاةَ تَنْهَىٰ عَنِ الْفَحْشَاءِ وَالْمُنكَرِ", en: "Indeed, prayer prohibits immorality and wrongdoing.", bn: "নিশ্চয়ই নামাজ অশ্লীল ও গর্হিত কাজ থেকে বিরত রাখে।", ref: "29:45", hAr: "أَوَّلُ مَا يُحَاسَبُ بِهِ الْعَبْدُ يَوْمَ الْقِيَامَةِ الصَّلَاةُ", hEn: "The first thing a servant will be called to account for on the Day of Judgment is the prayer.", hBn: "কিয়ামতের দিন সর্বপ্রথম নামাজের হিসাব নেওয়া হবে।", hRef: "Abu Dawud" },
+            { ar: "يَا بُنَيَّ أَقِمِ الصِّلَاةَ وَأْمُرْ بِالْمَعْرُوفِ", en: "O my son, establish prayer, enjoin what is right.", bn: "হে বৎস, নামাজ কায়েম কর এবং সৎকাজের আদেশ দাও।", ref: "31:17", hAr: "تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ", hEn: "Your smile for your brother is charity.", hBn: "তোমার ভাইয়ের প্রতি মুচকি হাসাও একটি সাদাকা।", hRef: "Tirmidhi" },
+            { ar: "إِنَّ الْمُسْلِمِينَ وَالْمُسْلِمَاتِ وَالْمُؤْمِنِينَ وَالْمُؤْمِنَاتِ", en: "Indeed, the Muslim men and women, the believing men and women...", bn: "নিশ্চয়ই মুসলিম পুরুষ ও নারী, মুমিন পুরুষ ও নারী...", ref: "33:35", hAr: "الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ", hEn: "A Muslim is one from whose tongue and hands other Muslims are safe.", hBn: "প্রকৃত মুসলিম সেই যার জিহ্বা ও হাত থেকে অন্য মুসলিম নিরাপদ থাকে।", hRef: "Bukhari" },
+            { ar: "لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ", en: "Do not despair of the mercy of Allah.", bn: "তোমরা আল্লাহর রহমত থেকে নিরাশ হয়ো না।", ref: "39:53", hAr: "كُلُّ ابْنِ آدَمَ خَطَّاءٌ وَخَيْرُ الْخَطَّائِينَ التَّوَّابُونَ", hEn: "Every son of Adam commits sin, and the best of those who sin are those who repent.", hBn: "আদম সন্তান সকলেই পাপী, আর পাপীদের মধ্যে উত্তম হলো তাওবাকারীরা।", hRef: "Tirmidhi" },
+            { ar: "وَقَالَ رَبُّكُمُ ادْعُونِي أَسْتَجِبْ لَكُمْ", en: "And your Lord says, 'Call upon Me; I will respond to you.'", bn: "তোমাদের রব বলেছেন, 'তোমরা আমাকে ডাকো, আমি সাড়া দেব।'", ref: "40:60", hAr: "إِنَّ اللَّهَ يَقْبَلُ تَوْبَةَ الْعَبْدِ مَا لَمْ يُغَرْغِرْ", hEn: "Allah accepts the repentance of a servant as long as he does not reach the death rattle.", hBn: "মৃত্যুর কষ্ট শুরু হওয়ার আগ পর্যন্ত আল্লাহ বান্দার তাওবা কবুল করেন।", hRef: "Tirmidhi" },
+            { ar: "إِنَّا أَنزَلْنَاهُ فِي لَيْلَةِ الْقَدْرِ", en: "Indeed, We sent the Qur'an down during the Night of Decree.", bn: "নিশ্চয়ই আমি এটি কদরের রাতে নাযিল করেছি।", ref: "97:1", hAr: "تَحَرَّوْا لَيْلَةَ الْقَدْرِ فِي الْوِتْرِ مِنَ الْعَشْرِ الأَوَاخِرِ", hEn: "Search for Laylatul Qadr in the odd nights of the last ten days of Ramadan.", hBn: "রমজানের শেষ দশ দিনের বেজোড় রাতগুলোতে কদরের রাত অন্বেষণ কর।", hRef: "Bukhari" },
+            { ar: "وَمَا تُقَدِّمُوا لِأَنفُسِكُم مِّنْ خَيْرٍ تَجِدُوهُ عِندَ اللَّهِ", en: "And whatever good you put forward for yourselves - you will find it with Allah.", bn: "তোমরা নিজেদের জন্য যা কিছু সৎকর্ম আগে পাঠাবে, তা আল্লাহর কাছে পাবে।", ref: "2:110", hAr: "الصَّدَقَةُ تُطْفِئُ الْخَطِيئَةَ كَمَا يُطْفِئُ الْمَاءُ النَّارَ", hEn: "Charity extinguishes sin as water extinguishes fire.", hBn: "পানি যেমন আগুন নিভিয়ে দেয়, সাদাকা তেমনি পাপ মিটিয়ে দেয়।", hRef: "Tirmidhi" },
+            { ar: "هَلْ جَزَاءُ الْإِحْسَانِ إِلَّا الْإِحْسَانُ", en: "Is the reward for good [anything] but good?", bn: "উত্তম কাজের প্রতিদান কি উত্তম ছাড়া অন্য কিছু হতে পারে?", ref: "55:60", hAr: "الرَّاحِمُونَ يَرْحَمُهُمُ الرَّحْمَنُ", hEn: "The merciful will be shown mercy by the Most Merciful.", hBn: "দয়াশীলদের প্রতি দয়াময় আল্লাহ দয়া করেন।", hRef: "Tirmidhi" },
+            { ar: "وَلْتَنظُرْ نَفْسٌ مَّا قَدَّمَتْ لِغَدٍ", en: "And let every soul look to what it has put forth for tomorrow.", bn: "প্রত্যেক ব্যক্তির উচিত চিন্তা করা সে আগামীকালের জন্য কী পাঠিয়েছে।", ref: "59:18", hAr: "احْفَظِ اللَّهَ يَحْفَظْكَ", hEn: "Be mindful of Allah, and He will protect you.", hBn: "আল্লাহকে স্মরণ রাখো, তিনি তোমাকে রক্ষা করবেন।", hRef: "Tirmidhi" },
+            { ar: "لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا", en: "Allah does not charge a soul except [with that within] its capacity.", bn: "আল্লাহ কারো ওপর তার সাধ্যের অতিরিক্ত বোঝা চাপান না।", ref: "2:286", hAr: "يَسِّرُوا وَلاَ تُعَسِّرُوا", hEn: "Make things easy and do not make them difficult.", hBn: "সহজ কর, কঠিন করো না।", hRef: "Bukhari" },
+            { ar: "وَاللَّهُ يُحِبُّ الصَّابِرِينَ", en: "And Allah loves the steadfast.", bn: "আর আল্লাহ ধৈর্যশীলদের ভালোবাসেন।", ref: "3:146", hAr: "وَمَا أُعْطِيَ أَحَدٌ عَطَاءً خَيْرًا وَأَوْسَعَ مِنَ الصَّبْرِ", hEn: "No one is given a gift better and more encompassing than patience.", hBn: "ধৈর্যের চেয়ে উত্তম ও প্রশস্ত কোনো উপহার কাউকে দেওয়া হয়নি।", hRef: "Bukhari" },
+            { ar: "سَلَامٌ قَوْلًا مِّن رَّبٍّ رَّحِيمٍ", en: "Peace, a word from a Merciful Lord.", bn: "দয়াময় রবের পক্ষ থেকে বলা হবে, 'সালাম' বা শান্তি।", ref: "36:58", hAr: "مَنْ لَمْ يَدَعْ قَوْلَ الزُّورِ وَالْعَمَلَ بِهِ فَلَيْسَ لِلَّهِ حَاجَةٌ فِي أَنْ يَدَعَ طَعَامَهُ وَشَرَابَهُ", hEn: "Whoever does not give up false speech, Allah has no need of him giving up food.", hBn: "যে মিথ্যা বলা ছাড়ল না, তার পানাহার ত্যাগে আল্লাহর কোনো প্রয়োজন নেই।", hRef: "Bukhari" }
+        ];
+
+        const ashraDuas = {
+            mercy: { ar: "رَّبِّ اغْفِرْ وَارْحَمْ وَأَنتَ خَيْرُ الرَّاحِمِينَ", en: "My Lord, forgive and have mercy." },
+            forgiveness: { ar: "أَسْتَغْفِرُ اللهَ رَبِّي مِنْ كُلِّ ذَنْبٍ وَأَتُوبُ إِلَيْهِ", en: "I seek forgiveness from my Lord." },
+            salvation: { ar: "اللَّهُمَّ أَجِرْنِي مِنَ النَّارِ", en: "O Allah, protect me from the Fire." }
+        };
+
+        function formatAMPM(t) {
+            if(!t) return "--:--";
+            let [h, m] = t.split(':').map(Number);
+            let ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m.toString().padStart(2,'0')} ${ampm}`;
+        }
+
+        async function fetchWeather(lat, lon) {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&forecast_days=1&timezone=auto`);
+                const data = await res.json();
+                document.getElementById('weather-display').innerText = `${Math.round(data.daily.temperature_2m_max[0])}° / ${Math.round(data.daily.temperature_2m_min[0])}°F`;
+            } catch (e) { document.getElementById('weather-display').innerText = "N/A"; }
+        }
+
+        async function updateLocationData() {
+            const locSelector = document.getElementById('location-selector');
+            const locVal = locSelector.value;
+            localStorage.setItem('ram_26_saved_location', locVal);
+            
+            const [lat, lon, tz] = locVal.split(',');
+            currentTz = tz;
+            
+            fetchWeather(lat, lon);
+            
+            const res = await fetch(`https://api.aladhan.com/v1/calendar/2026?latitude=${lat}&longitude=${lon}&method=2`);
+            const json = await res.json();
+            
+            const fullYear = Object.values(json.data).flat();
+            const ramadanStartIdx = fullYear.findIndex(d => d.date.gregorian.month.number === 2 && parseInt(d.date.gregorian.day) === 18);
+            ramadanDays = fullYear.slice(ramadanStartIdx, ramadanStartIdx + 30);
+            
+            renderCal();
+            
+            const ramStart = new Date(2026, 1, 18);
+            const today = new Date();
+            const diff = Math.ceil((today - ramStart) / 86400000);
+            const currentDay = Math.max(1, Math.min(30, diff));
+            loadDay(currentDay);
+            
+            setTimeout(() => {
+                const row = document.getElementById(`row-${currentDay}`);
+                if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 500);
+        }
+
+        function renderCal() {
+            const body = document.getElementById('calendar-body'); body.innerHTML = '';
+            const oddNights = [21, 23, 25, 27, 29];
+            for (let i = 0; i < 30; i++) {
+                const dayNum = i + 1;
+                const dData = ramadanDays[i]; 
+                const d = new Date(dData.date.readable);
+                const row = document.createElement('tr');
+                row.id = `row-${dayNum}`;
+                row.onclick = () => loadDay(dayNum);
+                row.className = `border-b border-white/5 cursor-pointer hover:bg-white/10 transition ${oddNights.includes(dayNum) ? 'qadr-row' : ''}`;
+                
+                row.innerHTML = `<td class="p-4 font-bold text-emerald-400">Day ${dayNum}${oddNights.includes(dayNum) ? '<span class="qadr-badge">Qadr</span>' : ''}</td><td class="p-4">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</td><td class="p-4 font-mono text-slate-400">${formatAMPM(dData.timings.Fajr.split(' ')[0])}</td><td class="p-4 font-bold font-mono text-white">${formatAMPM(dData.timings.Maghrib.split(' ')[0])}</td>`;
+                body.appendChild(row);
+            }
+        }
+
+        function loadDay(day) {
+            activeDay = day;
+            const content = uniqueGuidance[day - 1]; 
+            const ashraKey = day <= 10 ? 'mercy' : (day <= 20 ? 'forgiveness' : 'salvation');
+            
+            document.getElementById('active-day-title').innerText = `DAY ${day}`;
+            document.getElementById('ashra-label').innerText = `Ashra ${day <= 10 ? '1: Mercy' : (day <= 20 ? '2: Forgiveness' : '3: Salvation')}`;
+            document.getElementById('ashra-dua-ar').innerText = ashraDuas[ashraKey].ar;
+            document.getElementById('ashra-dua-en').innerText = ashraDuas[ashraKey].en;
+            
+            document.getElementById('ayat-arabic').innerText = content.ar;
+            document.getElementById('ayat-eng').innerText = content.en;
+            document.getElementById('ayat-bangla').innerText = content.bn;
+            document.getElementById('ayat-ref').innerText = `[Quran ${content.ref}]`;
+            
+            document.getElementById('hadith-arabic').innerText = content.hAr;
+            document.getElementById('hadith-eng').innerText = content.hEn;
+            document.getElementById('hadith-bangla').innerText = content.hBn;
+            document.getElementById('hadith-ref').innerText = `[${content.hRef}]`;
+
+            document.getElementById('deed-list').innerHTML = [
+                `Read Surah ${surahMap[day-1] || "Al-Ikhlas"}`,
+                `Complete Juz ${day} Study`,
+                `Astaghfirullah 100x`
+            ].map((d, i) => `
+                <label class="flex items-center gap-3 p-3 bg-white/5 rounded-xl cursor-pointer">
+                    <input type="checkbox" class="deed-check w-4 h-4 accent-emerald-500 rounded" onchange="saveProgress()">
+                    <span class="text-xs text-slate-300">${d}</span>
+                </label>`).join('');
+
+            document.querySelectorAll('tr').forEach(r => r.classList.remove('active-day-row'));
+            if(document.getElementById(`row-${day}`)) document.getElementById(`row-${day}`).classList.add('active-day-row');
+            document.getElementById('progress-fill').style.width = `${Math.round((day/30)*100)}%`;
+            document.getElementById('progress-text').innerText = `${Math.round((day/30)*100)}%`;
+            document.getElementById('moon-phase-icon').className = `fas fa-moon moon-icon ashra-${ashraKey}`;
+
+            const dData = ramadanDays[day - 1];
+            if(dData) {
+                document.getElementById('sunrise-display').innerText = formatAMPM(dData.timings.Sunrise.split(' ')[0]);
+                document.getElementById('sunset-display').innerText = formatAMPM(dData.timings.Sunset.split(' ')[0]);
+                document.getElementById('prayer-list').innerHTML = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map(p => `
+                    <label class="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5 cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" class="prayer-check w-4 h-4 accent-emerald-500 rounded" onchange="saveProgress()">
+                            <span class="text-xs font-semibold text-slate-300">${p}</span>
+                        </div>
+                        <span class="text-[10px] text-emerald-400 font-mono">${formatAMPM(dData.timings[p].split(' ')[0])}</span>
+                    </label>`).join('');
+            }
+            loadSavedProgress();
+        }
+
+        // Updated Tasbeeh logic: Now ties to location
+        function updateTasbeeh(v) { 
+            const loc = document.getElementById('location-selector').value;
+            tCount = Math.max(0, tCount + v); 
+            document.getElementById('tasbih-count').innerText = tCount;
+            localStorage.setItem(`ram_26_tasbeeh_${loc}`, tCount);
+        }
+        
+        function resetTasbeeh() {
+            const loc = document.getElementById('location-selector').value;
+            tCount = 0;
+            document.getElementById('tasbih-count').innerText = 0;
+            localStorage.removeItem(`ram_26_tasbeeh_${loc}`);
+        }
+
+        function saveProgress() {
+            const d = Array.from(document.querySelectorAll('.deed-check')).map(c => c.checked);
+            const p = Array.from(document.querySelectorAll('.prayer-check')).map(c => c.checked);
+            const loc = document.getElementById('location-selector').value;
+            localStorage.setItem(`ram_26_day_${activeDay}_${loc}`, JSON.stringify({d, p}));
+            
+            document.getElementById('save-msg').style.opacity = 1;
+            setTimeout(() => document.getElementById('save-msg').style.opacity = 0, 1000);
+        }
+        
+        function loadSavedProgress() {
+            const loc = document.getElementById('location-selector').value;
+            const s = JSON.parse(localStorage.getItem(`ram_26_day_${activeDay}_${loc}`) || '{}');
+            
+            // Load Tasbeeh count specific to this location
+            tCount = parseInt(localStorage.getItem(`ram_26_tasbeeh_${loc}`) || 0);
+            document.getElementById('tasbih-count').innerText = tCount;
+
+            if(s.d) document.querySelectorAll('.deed-check').forEach((c, i) => c.checked = s.d[i]);
+            if(s.p) document.querySelectorAll('.prayer-check').forEach((c, i) => c.checked = s.p[i]);
+        }
+
+        function calcZ() { 
+            const v = document.getElementById('z-val').value; 
+            document.getElementById('z-res').innerText = `$${(v * 0.025).toLocaleString(undefined, {minimumFractionDigits: 2})}`; 
+        }
+
+        function updateClock() {
+            const cityNow = new Date(new Date().toLocaleString('en-US', { timeZone: currentTz }));
+            document.getElementById('local-time-display').innerText = cityNow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            
+            if (ramadanDays && ramadanDays.length > 0) {
+                const todayStr = cityNow.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+                let dData = ramadanDays.find(d => d.date.gregorian.date === todayStr);
+                if (!dData) dData = ramadanDays[activeDay - 1] || ramadanDays[0];
+
+                const maghribTimeStr = dData.timings.Maghrib.split(' ')[0];
+                const [h, m] = maghribTimeStr.split(':').map(Number);
+                const iftar = new Date(cityNow); 
+                iftar.setHours(h, m, 0, 0);
+                
+                let diff = iftar - cityNow;
+                if (diff < 0) {
+                    document.getElementById('timer-display').innerText = "Iftar Time!";
+                } else {
+                    const hrs = Math.floor(diff / 3600000);
+                    const mins = Math.floor((diff % 3600000) / 60000);
+                    document.getElementById('timer-display').innerText = `${hrs}h ${mins}m`;
+                }
+            }
+        }
+
+        const savedLocation = localStorage.getItem('ram_26_saved_location');
+        if (savedLocation) {
+            const selector = document.getElementById('location-selector');
+            if ([...selector.options].some(opt => opt.value === savedLocation)) {
+                selector.value = savedLocation;
+            }
+        }
+        
+        updateLocationData();
+        setInterval(updateClock, 1000);
+    </script>
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => console.log('Service Worker registered!', reg))
+                    .catch((err) => console.log('Service Worker failed.', err));
+            });
+        }
+    </script>
+</body>
+</html>
